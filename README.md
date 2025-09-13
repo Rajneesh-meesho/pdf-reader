@@ -4,7 +4,7 @@ A full-stack application that extracts structured data from PDF purchase orders 
 
 ## 🚀 Quick Start
 
-### Option 1: Docker (Recommended)
+###  Docker (Recommended)
 
 ```bash
 cd llm_games
@@ -19,9 +19,28 @@ docker-compose -f docker-compose.prod.yml up -d
 ```
 
 
+## 🔮 Area of  Improvements
+
+### **Dynamic Schema Architecture**
+
+Instead of fixing the current SQL schema, I would prefer to add another layer which actively decides the schema for any uploaded PDFs and sees if it fits the existing format. If not, use an agent to come up with a new format. 
+
+Rather than using SQL, I'd prefer MongoDB since our schema can't always be predictable - different orders can have different formats. A document database can help tackle this problem and store data in flexible format from different PDFs.
+
+The approach would also change how we handle the frontend - not fetching data in standard format but in document format, using components wisely for showing nested dynamic JSON on the UI. Since our data format is dynamic, the frontend logic should also be fluid.
+
+One idea is to have a UI engine where as we generate a structured format for a new PDF which is new, we also generate a UI blueprint like a tree structure of components. When any data is fetched, this tree structure is also fetched and components are dynamically generated on the UI.
+
+The flow would be: PDF gets uploaded, schema analysis happens, format detection occurs, then document storage. Simultaneously, UI blueprint generation happens, and when data is fetched, the blueprint comes with it to dynamically create the component tree and render the UI.
+
+This approach would handle any purchase order format dynamically, making the system truly universal rather than limited to the current fixed schema.
 
 
-### Option 2: Local Development
+
+
+
+
+### Local Development
 
 ```bash
 # 1. Start PostgreSQL
@@ -142,6 +161,8 @@ Interactive docs available at: http://localhost:8000/docs
 
 The `sample_pdfs/` directory contains test purchase order PDFs for development and demonstration.
 
+
+
 ## 🐳 Docker Deployment
 
 ### Development
@@ -154,29 +175,11 @@ first
 ```bash
 docker-compose -f docker-compose.prod.yml up -d
 ```
-
+ 
 ### Docker Hub Images
 - Backend: `rajneesh2311/pdf-parser-backend:latest`
 - Frontend: `rajneesh2311/pdf-parser-frontend:latest`
 
-## 🔐 Environment Variables
-
-### Required
-- `GEMINI_API_KEY` - Google Gemini API key for PDF parsing
-
-### Optional (with defaults)
-- `POSTGRES_HOST` - Database host (default: localhost)
-- `POSTGRES_PORT` - Database port (default: 4000 for local, 5432 for Docker)
-- `POSTGRES_USER` - Database user (default: parser)
-- `POSTGRES_PASSWORD` - Database password (default: parser123)
-- `POSTGRES_DB` - Database name (default: parser)
-
-## 🧪 Testing
-
-### Upload Test
-1. Go to http://localhost:3000/upload
-2. Upload a PDF from `sample_pdfs/`
-3. Verify data appears in dashboard
 
 ### API Test
 ```bash
@@ -189,12 +192,6 @@ curl -X POST "http://localhost:8000/upload-pdf" \
   -F "file=@sample_pdfs/purchase-order.pdf"
 ```
 
-## 🚀 Deployment to Production
-
-1. **Push to Docker Hub**
-2. **Set environment variables** on target server
-3. **Run docker-compose.prod.yml**
-4. **Access via domain/IP**
 
 ## ⚠️ Known Limitations
 
@@ -206,31 +203,10 @@ curl -X POST "http://localhost:8000/upload-pdf" \
 
 4. **No User Authentication**: Currently open access. Production deployment should add authentication/authorization.
 
-## 🔮 Future Improvements
-
-1. **Batch PDF Processing** - Upload and process multiple PDFs simultaneously
-2. **Advanced AI Models** - Support for multiple AI providers (OpenAI, Claude, etc.)
-3. **Export Functionality** - Export filtered data to CSV/Excel
-4. **Real-time Updates** - WebSocket integration for live data updates
-5. **User Management** - Authentication and role-based access
-6. **Advanced Analytics** - Charts, trends, and business insights
-7. **API Rate Limiting** - Protect against abuse
-8. **Audit Logging** - Track all data changes
-9. **Data Backup** - Automated backup and restore capabilities
-10. **Mobile Responsive** - Enhanced mobile experience
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
 ## 📄 License
 
 MIT License - See LICENSE file for details
 
 ## 👨‍💻 Author
 
-Built with ❤️ using FastAPI, React, PostgreSQL, and Google Gemini AI.
+Built with using FastAPI, React, PostgreSQL, and Google Gemini AI.
