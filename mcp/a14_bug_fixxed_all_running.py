@@ -839,11 +839,11 @@ def get_order_pdf_files(start, end) -> List[str]:
 # --------------------------------------------------------------------------------------------
 
 def main():
-    print("Order Email PDF Extractor - Only Downloads PDFs from Order Emails")
+    print("Order Email PDF Extractor")
     
     
-    start = datetime(2025, 9, 25, 12, 0)  # Dec 1, 2024, 9:00 AM
-    end = datetime(2025, 9, 26, 23, 0)   # Dec 1, 2024, 5:00 PM
+    start = datetime(2025, 9, 25, 12, 0)  # sep 25, 2025, 12:00 PM
+    end   = datetime(2025, 9, 26, 23, 0)  # sep 26 , 2025, 23:00 PM
     
     print(get_order_pdf_files(start, end))
    
