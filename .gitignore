@@ -121,6 +121,7 @@ work_plan.txt
 
 
 */token.pkl
+*/cred.json
 mcp/token.pkl
 
 # TNA specific
@@ -128,5 +129,10 @@ parser/tna/.env
 parser/tna/xlsump/
 tna_frontend/node_modules/
 tna_frontend/build/
+
+# Credentials
+parser/cred.json
+mcp/cred.json
+*/cred.json
 .pre-commit-config.yaml
 trufflehog/
