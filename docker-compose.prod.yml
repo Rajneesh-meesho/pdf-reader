@@ -25,7 +25,7 @@ services:
       POSTGRES_USER: parser
       POSTGRES_PASSWORD: parser123
       POSTGRES_DB: parser
-      GEMINI_API_KEY: AIzaSyAlz_IFAwsGXxfdtTm5gAr6wvtFji8KACY
+      GEMINI_API_KEY: your key
     ports:
       - "8000:8000"
     depends_on:

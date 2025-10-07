@@ -122,5 +122,11 @@ work_plan.txt
 
 */token.pkl
 mcp/token.pkl
+
+# TNA specific
+parser/tna/.env
+parser/tna/xlsump/
+tna_frontend/node_modules/
+tna_frontend/build/
 .pre-commit-config.yaml
 trufflehog/
