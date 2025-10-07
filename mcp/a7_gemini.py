@@ -152,7 +152,7 @@ class GmailTools(Toolkit):
 
 # ---------------- Agent Setup ----------------
 
-os.environ["GOOGLE_API_KEY"] = "your_api_key"
+os.environ["GOOGLE_API_KEY"] = "AIzaSyAlz_IFAwsGXxfdtTm5gAr6wvtFji8KACY"
 
 agent = Agent(
     model=Gemini(id="models/gemini-1.5-flash-latest"),   # or "gemini-1.5-pro"
@@ -160,7 +160,7 @@ agent = Agent(
 
     name="Gmail Assistant",
     show_tool_calls=True,
-    api_key = 'your_api_key',
+    api_key = 'AIzaSyAlz_IFAwsGXxfdtTm5gAr6wvtFji8KACY',
     temperature= 0.2,
     description=
     """You are a Gmail assistant. 

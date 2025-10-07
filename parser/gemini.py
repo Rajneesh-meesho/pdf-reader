@@ -16,7 +16,7 @@ genai.configure(api_key=GEMINI_API_KEY)
 
 def get_gemini_response(pdf_path: str, prompt: str) -> dict:
    
-    model = genai.GenerativeModel('models/gemini-1.5-flash-latest')
+    model = genai.GenerativeModel('models/gemini-2.5-pro')
     # model = genai.GenerativeModel('models/gemini-1.5-pro-latest')
 
 

@@ -4,10 +4,14 @@ import asyncpg
 import tempfile
 import os
 import uuid
-from datetime import datetime
+import asyncio
+import threading
+import time
+from datetime import datetime, timedelta
 from typing import Optional, List
 from dotenv import load_dotenv
 from gemini import extract_pdf_data
+from email_reader import get_order_pdf_files
 
 load_dotenv()  # Load from current directory
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))  # Load from parent directory
@@ -31,6 +35,115 @@ POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "parser123")
 POSTGRES_DB = os.getenv("POSTGRES_DB", "parser")
 
 DATABASE_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
+
+# Global variable to control scheduler
+scheduler_running = False
+
+def email_scheduler():
+    """Background scheduler that checks for new order PDFs every 5 minutes"""
+    global scheduler_running
+    scheduler_running = True
+    
+    print("📧 Email scheduler started - checking for new order PDFs every 5 minutes")
+    
+    while scheduler_running:
+        try:
+            # Calculate time range (last 5 minutes)
+            end_time = datetime.now()
+            start_time = end_time - timedelta(minutes=5)
+            
+            print(f"🔍 Checking emails from {start_time.strftime('%Y-%m-%d %H:%M:%S')} to {end_time.strftime('%Y-%m-%d %H:%M:%S')}")
+            
+            # Get order PDF files from email reader
+            pdf_paths = get_order_pdf_files(start_time, end_time)
+            
+            if pdf_paths and len(pdf_paths) > 0:
+                print(f"📄 Found {len(pdf_paths)} order PDF(s) to process")
+                
+                # Process each PDF file
+                for pdf_path in pdf_paths:
+                    if pdf_path and os.path.exists(pdf_path):
+                        print(f"🔄 Processing PDF: {pdf_path}")
+                        
+                        # Create new event loop for this thread
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                        
+                        try:
+                            # Process the PDF
+                            result = loop.run_until_complete(process_pdf_from_path(pdf_path))
+                            
+                            if result["success"]:
+                                print(f"✅ Successfully processed: {pdf_path}")
+                                if result["is_duplicate"]:
+                                    print(f"   📝 Updated existing order: {result['order_id']}")
+                                else:
+                                    print(f"   🆕 Created new order: {result['order_id']}")
+                            else:
+                                print(f"❌ Failed to process {pdf_path}: {result['error']}")
+                                
+                        except Exception as e:
+                            print(f"❌ Error processing {pdf_path}: {str(e)}")
+                        finally:
+                            loop.close()
+                    else:
+                        print(f"⚠️  PDF file not found or invalid: {pdf_path}")
+            else:
+                print("📭 No new order PDFs found in the last 5 minutes")
+                
+        except Exception as e:
+            print(f"❌ Error in email scheduler: {str(e)}")
+        
+        # Wait for 5 minutes before next check
+        print("⏰ Waiting 5 minutes before next check...")
+        time.sleep(300)  # 5 minutes = 300 seconds
+
+def start_email_scheduler():
+    """Start the email scheduler in a background thread"""
+    scheduler_thread = threading.Thread(target=email_scheduler, daemon=True)
+    scheduler_thread.start()
+    print("🚀 Email scheduler thread started")
+    return scheduler_thread
+
+def stop_email_scheduler():
+    """Stop the email scheduler"""
+    global scheduler_running
+    scheduler_running = False
+    print("🛑 Email scheduler stopped")
+
+async def process_pdf_from_path(pdf_path: str) -> dict:
+    """Process a PDF file from local path and save to database"""
+    try:
+        print(f"DEBUG: Processing PDF from path: {pdf_path}")
+        
+        # Check if file exists
+        if not os.path.exists(pdf_path):
+            raise HTTPException(status_code=404, detail=f"PDF file not found: {pdf_path}")
+        
+        # Parse PDF using existing function
+        parsed_data = extract_pdf_data(pdf_path)
+        print(f"DEBUG: PDF parsed successfully from path")
+        
+        # Save to database using existing function
+        result = await save_to_database(parsed_data)
+        print(f"DEBUG: Saved to database successfully from path")
+        
+        return {
+            "success": True,
+            "message": "PDF processed successfully from email",
+            "order_id": result["order_id"],
+            "is_duplicate": result["is_duplicate"],
+            "parsed_data": parsed_data,
+            "pdf_path": pdf_path
+        }
+        
+    except Exception as e:
+        print(f"ERROR: Failed to process PDF from path {pdf_path}: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "pdf_path": pdf_path
+        }
 
 async def save_to_database(parsed_data: dict) -> dict:
     """Save parsed PDF data to PostgreSQL database with UPSERT logic"""
@@ -456,6 +569,44 @@ async def get_stats():
         
     finally:
         await conn.close()
+
+@app.get("/scheduler/status")
+async def get_scheduler_status():
+    """Get email scheduler status"""
+    return {
+        "scheduler_running": scheduler_running,
+        "status": "active" if scheduler_running else "stopped",
+        "check_interval": "5 minutes",
+        "description": "Automatically checks for new order PDFs from emails"
+    }
+
+@app.post("/scheduler/start")
+async def start_scheduler():
+    """Manually start the email scheduler"""
+    if not scheduler_running:
+        start_email_scheduler()
+        return {"message": "Email scheduler started", "status": "started"}
+    else:
+        return {"message": "Email scheduler is already running", "status": "already_running"}
+
+@app.post("/scheduler/stop")
+async def stop_scheduler():
+    """Manually stop the email scheduler"""
+    if scheduler_running:
+        stop_email_scheduler()
+        return {"message": "Email scheduler stopped", "status": "stopped"}
+    else:
+        return {"message": "Email scheduler is already stopped", "status": "already_stopped"}
+
+@app.on_event("startup")
+async def startup_event():
+    """Start the email scheduler when the server starts"""
+    start_email_scheduler()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Stop the email scheduler when the server shuts down"""
+    stop_email_scheduler()
 
 if __name__ == "__main__":
     import uvicorn
